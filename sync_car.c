@@ -52,3 +52,13 @@ void station_wait_for_car(station_t *station) {
 
     pthread_mutex_unlock(&station->lock);
 }
+
+void station_on_board(station_t *station) {
+    pthread_mutex_lock(&station->lock);
+
+    if (station->boarded >= station->capacity || station->waiting == 0) {
+        pthread_cond_broadcast(&station->passenger_boarded);
+    }
+
+    pthread_mutex_unlock(&station->lock);
+}
