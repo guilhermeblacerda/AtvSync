@@ -37,3 +37,18 @@ void station_load_car(station_t *station, int count) {
 
     pthread_mutex_unlock(&station->lock);
 }
+
+void station_wait_for_car(station_t *station) {
+    pthread_mutex_lock(&station->lock);
+
+    station->waiting++;
+
+    while (!station->car_available || station->boarded >= station->capacity) {
+        pthread_cond_wait(&station->car_arrived, &station->lock);
+    }
+
+    station->waiting--;
+    station->boarded++;
+
+    pthread_mutex_unlock(&station->lock);
+}
