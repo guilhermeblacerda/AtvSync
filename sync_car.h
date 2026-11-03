@@ -11,8 +11,9 @@ struct station {
 
     int car_available;
     int capacity;
-    int waiting;
     int boarded;
+    int waiting;
+    int onboard_pending;
 };
 
 void station_init(struct station *station);
