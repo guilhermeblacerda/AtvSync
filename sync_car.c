@@ -1,6 +1,9 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "sync_car.h"
 
-void station_init(station_t *station) {
+void station_init(struct station *station) {
     pthread_mutex_init(&station->lock, NULL);
     pthread_cond_init(&station->car_arrived, NULL);
     pthread_cond_init(&station->passenger_boarded, NULL);
@@ -12,7 +15,7 @@ void station_init(station_t *station) {
     station->boarded = 0;
 }
 
-void station_load_car(station_t *station, int count) {
+void station_load_car(struct station *station, int count) {
     pthread_mutex_lock(&station->lock);
 
     while (station->car_available) {
@@ -38,7 +41,7 @@ void station_load_car(station_t *station, int count) {
     pthread_mutex_unlock(&station->lock);
 }
 
-void station_wait_for_car(station_t *station) {
+void station_wait_for_car(struct station *station) {
     pthread_mutex_lock(&station->lock);
 
     station->waiting++;
@@ -53,7 +56,7 @@ void station_wait_for_car(station_t *station) {
     pthread_mutex_unlock(&station->lock);
 }
 
-void station_on_board(station_t *station) {
+void station_on_board(struct station *station) {
     pthread_mutex_lock(&station->lock);
 
     if (station->boarded >= station->capacity || station->waiting == 0) {
@@ -62,3 +65,57 @@ void station_on_board(station_t *station) {
 
     pthread_mutex_unlock(&station->lock);
 }
+
+#ifdef SYNC_CAR_MAIN
+
+#define NUM_PASSENGERS 20
+#define CAR_CAPACITY 5
+#define NUM_CARS 4
+
+static struct station st;
+
+static void *passenger_thread(void *arg) {
+    (void)arg;
+    station_wait_for_car(&st);
+    usleep(1000);
+    station_on_board(&st);
+    return NULL;
+}
+
+static void *car_thread(void *arg) {
+    (void)arg;
+    for (int i = 0; i < NUM_CARS; i++) {
+        station_load_car(&st, CAR_CAPACITY);
+        usleep(5000);
+    }
+    return NULL;
+}
+
+int main(void) {
+    station_init(&st);
+
+    pthread_t car;
+    pthread_create(&car, NULL, car_thread, NULL);
+
+    pthread_t passengers[NUM_PASSENGERS];
+    for (int i = 0; i < NUM_PASSENGERS; i++) {
+        pthread_create(&passengers[i], NULL, passenger_thread, NULL);
+        usleep(200);
+    }
+
+    for (int i = 0; i < NUM_PASSENGERS; i++) {
+        pthread_join(passengers[i], NULL);
+    }
+    pthread_join(car, NULL);
+
+    printf("Todos os %d passageiros embarcaram em %d carros (cap=%d).\n",
+           NUM_PASSENGERS, NUM_CARS, CAR_CAPACITY);
+
+    pthread_mutex_destroy(&st.lock);
+    pthread_cond_destroy(&st.car_arrived);
+    pthread_cond_destroy(&st.passenger_boarded);
+    pthread_cond_destroy(&st.car_ready_leave);
+    return 0;
+}
+
+#endif
