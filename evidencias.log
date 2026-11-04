@@ -1,0 +1,15 @@
+car entering station with 23 free seats
+Error: station_load_car returned early!
+
+
+
+Todos os 20 passageiros embarcaram em 5 carros (cap=5).
+car entering station with 42 free seats
+car departed station with 42 new passenger(s) (expected 42)
+car entering station with 5 free seats
+car departed station with 5 new passenger(s) (expected 5)
+car entering station with 46 free seats
+car departed station with 46 new passenger(s) (expected 46)
+car entering station with 35 free seats
+car departed station with 7 new passenger(s) (expected 7)
+Looks good!
