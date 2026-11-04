@@ -75,7 +75,7 @@ void station_on_board(struct station *station) {
 
 #define NUM_PASSENGERS 20
 #define CAR_CAPACITY 5
-#define NUM_CARS 4
+#define NUM_CARS 5
 
 static struct station st;
 
@@ -89,29 +89,27 @@ static void *passenger_thread(void *arg) {
 
 static void *car_thread(void *arg) {
     (void)arg;
-    for (int i = 0; i < NUM_CARS; i++) {
-        station_load_car(&st, CAR_CAPACITY);
-        usleep(5000);
-    }
+    station_load_car(&st, CAR_CAPACITY);
     return NULL;
 }
 
 int main(void) {
     station_init(&st);
 
-    pthread_t car;
-    pthread_create(&car, NULL, car_thread, NULL);
-
     pthread_t passengers[NUM_PASSENGERS];
-    for (int i = 0; i < NUM_PASSENGERS; i++) {
+    for (int i = 0; i < NUM_PASSENGERS; i++)
         pthread_create(&passengers[i], NULL, passenger_thread, NULL);
-        usleep(200);
-    }
 
-    for (int i = 0; i < NUM_PASSENGERS; i++) {
+    usleep(200000);
+
+    pthread_t cars[NUM_CARS];
+    for (int i = 0; i < NUM_CARS; i++)
+        pthread_create(&cars[i], NULL, car_thread, NULL);
+
+    for (int i = 0; i < NUM_PASSENGERS; i++)
         pthread_join(passengers[i], NULL);
-    }
-    pthread_join(car, NULL);
+    for (int i = 0; i < NUM_CARS; i++)
+        pthread_join(cars[i], NULL);
 
     printf("Todos os %d passageiros embarcaram em %d carros (cap=%d).\n",
            NUM_PASSENGERS, NUM_CARS, CAR_CAPACITY);
